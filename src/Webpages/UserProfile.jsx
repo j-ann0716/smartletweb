@@ -42,7 +42,7 @@ export default function UserProfile() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-4 md:p-8 md:max-h-[593px]">
+      <div className="flex-1 p-4 md:p-8S md:max-h-[593px]">
         <div className="bg-white p-4 md:p-6 rounded-lg shadow h-full overflow-y-auto max-h-[calc(100%-2rem)]">
           <h2 className="text-[#533d64] md:text-[22px] mb-3 font-semibold font-nunito">{activeTab}</h2>
           <hr className="w-full border-[#533d64]/50 mb-6" />
