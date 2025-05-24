@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet');
+
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme {
+  --font-nunito: "Nunito", sans-serif;
+  --breakpoint-*: initial;
+  --breakpoint-sm-phone: 20rem;  /* 320px - small phones */
+  --breakpoint-phone: 30rem;   /* 480px - larger phones */
+  --breakpoint-tablet: 48rem;  /* 768px - tablets */
+  --breakpoint-sm-laptop: 64rem;  /* 1024px - small laptops */
+  --breakpoint-desktop: 80rem;  /* 1280px - desktops */
+  --breakpoint-2xl: 96rem;  /* 1536px - large screens */
+  --breakpoint-3xl: 120rem;  /* 1920px - ultra-wide */
+}
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
