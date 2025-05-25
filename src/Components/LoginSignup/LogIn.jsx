@@ -5,7 +5,7 @@ import usernameImg from '../../Webpages/img/icons8-username-48.png';
 import passImg from '../../Webpages/img/icons8-password-48.png';
 import SignUp from './SignUp';
 import ForgotPassword from "./ForgotPass";
-import MessageModal from './MessageModal';
+import MessageModal from '../MessageModal';
 
 export default function LogIn({ onLogin, onClose }) {
     const [username, setUsername] = useState("");

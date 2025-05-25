@@ -5,7 +5,7 @@ import FlashcardTable from "../Flashcard/FlashcardTable";
 import QuizCreate from "../Quiz/QuizCreate";
 import QuizTable from "../Quiz/QuizTable";
 import QuizScores from "../Quiz/QuizScore";
-import MessageModal from './MessageModal';
+import MessageModal from '../MessageModal';
 
 export default function TabPanel() {
   const [activeTab, setActiveTab] = useState("tab1");

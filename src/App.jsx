@@ -11,7 +11,6 @@ import UserProfile from './Webpages/UserProfile'
 import AdminPanel from './Webpages/AdminPanel'
 import FlashContent from './Components/Flashcard/FlashcardContent'
 import QuizContent from './Components/Quiz/QuizContent'
-import Settings from './Webpages/Settings'
 //Components
 import Layout from './Components/Layout'
 

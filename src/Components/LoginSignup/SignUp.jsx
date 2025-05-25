@@ -3,7 +3,7 @@ import { useState } from 'react';
 import BackBtn from "../BackBtn";
 import backArrow from '../../Webpages/img/icons8-back-96.png'; //for the arrow back button
 import closeImg from '../../Webpages/img/icons8-close-48.png';
-import MessageModal from './MessageModal';
+import MessageModal from '../MessageModal';
 
 export default function SignUp({ onClose, onLogin }) {
   const [showLogin, setShowLogin] = useState(false);

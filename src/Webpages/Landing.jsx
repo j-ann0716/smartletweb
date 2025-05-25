@@ -7,7 +7,7 @@ import fCard from "../Webpages/img/icons8-flashcards-50.png";
 import progressImg from "../Webpages/img/icons8-progress-50.png";
 import FlashcardGrid from "../Components/Flashcard/FlashcardGrid";
 import FourthSectionAccordion from "../Components/FourthSectionAccordion";
-import MessageModal from './MessageModal';
+import MessageModal from '../Components/MessageModal';
 
 const Landing = () => {
     document.title = "Smartlet - Landing";

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import backArrow from "../../Webpages/img/icons8-back-96.png";
 import BackBtn from "../BackBtn";
-import MessageModal from './MessageModal';
+import MessageModal from '../MessageModal';
 
 export default function QuizContent() {
   const navigate = useNavigate();
