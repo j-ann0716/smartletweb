@@ -7,6 +7,7 @@ import fCard from "../Webpages/img/icons8-flashcards-50.png";
 import progressImg from "../Webpages/img/icons8-progress-50.png";
 import FlashcardGrid from "../Components/Flashcard/FlashcardGrid";
 import FourthSectionAccordion from "../Components/FourthSectionAccordion";
+import MessageModal from './MessageModal';
 
 const Landing = () => {
     document.title = "Smartlet - Landing";
@@ -17,6 +18,7 @@ const Landing = () => {
     const [loggedInUser, setLoggedInUser] = useState(null); 
     const [pendingRoute, setPendingRoute] = useState(null);
     const navigate = useNavigate(); 
+    const [message, setMessage] = useState("");
 
     // Fetch data
     useEffect(() => {
@@ -53,7 +55,7 @@ const Landing = () => {
             setPendingRoute(null);
         }
     } else {
-        alert("User not found!");
+        setMessage("User not found!");
     }
     };
 
@@ -174,6 +176,7 @@ const Landing = () => {
             </div>
             
             {showLogin && <LogIn onLogin={handleLogin} onClose={() => setShowLogin(false)}  />}
+            <MessageModal message={message} onClose={() => setMessage("")} />
         </>
     )
 }

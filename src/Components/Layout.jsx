@@ -4,6 +4,7 @@ import logoImg from "../Webpages/img/logo.png";
 import LogIn from './LoginSignup/LogIn';
 import menuImg from "../Webpages/img/icons8-menu-48.png";
 import closeImg from '../Webpages/img/icons8-close-48 (1).png';
+import MessageModal from './MessageModal';
 
 export default function Layout() {
     const [showLogin, setShowLogin] = useState(false);
@@ -15,6 +16,7 @@ export default function Layout() {
     const [showProfile, setShowProfile] = useState(false);
     const [showMobileProfile, setShowMobileProfile] = useState(false);
     const [showSignUp, setShowSignUp] = useState(false);
+    const[message, setMessage] = useState("");
 
     const navigate = useNavigate();
     // Fetch user data
@@ -170,7 +172,7 @@ export default function Layout() {
 
             {/* Login Modal */}
             {showLogin && <LogIn onLogin={handleLogin} onClose={() => setShowLogin(false)} />}
-
+            <MessageModal message={message} onClose={() => setMessage("")} />
             {/* Page content */}
             <Outlet />
         </>

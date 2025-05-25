@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import EditQuiz from "./EditQuiz"; 
+import MessageModal from "../MessageModal";
 
 export default function QuizTable({  quizzes, loggedInUser, onEdit, onDelete  }) {
   const [editingQuiz, setEditingQuiz] = useState(null);
+  const [message, setMessage] = useState("");
 
   const handleEditClick = (quiz) => {
     if (loggedInUser?.user_id !== quiz.creator_id) {
-      alert("You can only edit quizzes you created.");
+      setMessage("You can only edit quizzes you created.");
       return;
     }
     setEditingQuiz(quiz);
@@ -75,6 +77,8 @@ export default function QuizTable({  quizzes, loggedInUser, onEdit, onDelete  })
           <EditQuiz quizData={editingQuiz} onClose={handleCloseEdit} />
         </div>
       )}
+      {/* Message modal */}
+      <MessageModal message={message} onClose={() => setMessage("")} />
     </>
   );
 }

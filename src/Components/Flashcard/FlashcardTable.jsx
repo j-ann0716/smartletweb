@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import EditFlashcard from "./EditFlashcard";
+import MessageModal from "../MessageModal";
 
 export default function FlashcardTable({ flashcards, loggedInUser, onDelete, deletingId }) {
   const [editingFlashcard, setEditingFlashcard] = useState(null);
+  const [message, setMessage] = useState("");
 
   const handleEditClick = (card) => {
     if (loggedInUser?.user_id !== card.creator_id) {
-      alert("You can only edit flashcards you created.");
+      setMessage("You can only edit flashcards you created.");
       return;
     }
     setEditingFlashcard(card);
@@ -18,7 +20,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
 
   const handleDeleteClick = (card) => {
     if (loggedInUser?.user_id !== card.creator_id) {
-      alert("You can only delete flashcards you created.");
+      setMessage("You can only delete flashcards you created.");
       return;
     }
     onDelete(card);
@@ -77,6 +79,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
           <EditFlashcard flashcardData={editingFlashcard} onClose={handleCloseEdit} />
         </div>
       )}
+      <MessageModal message={message} onClose={() => setMessage("")} />
     </>
   );
 }

@@ -3,10 +3,12 @@ import { useState } from 'react';
 import BackBtn from "../BackBtn";
 import backArrow from '../../Webpages/img/icons8-back-96.png'; //for the arrow back button
 import closeImg from '../../Webpages/img/icons8-close-48.png';
+import MessageModal from './MessageModal';
 
 export default function SignUp({ onClose, onLogin }) {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignUp, setShowSignUp] = useState(true);
+  const [message, setMessage] = useState("");
 
   const [usernameError, setUsernameError] = useState("");
 
@@ -65,13 +67,13 @@ export default function SignUp({ onClose, onLogin }) {
 
       const createdUser = await res.json(); // 👈 Get the actual saved user from backend
 
-      alert("Account created successfully!");
+      setMessage("Account created successfully!");
       onClose();
       window.location.reload();
 
     } catch (err) {
       console.error(err);
-      alert("Could not create account");
+      setMessage("Could not create account");
     }
   };
 
@@ -159,6 +161,7 @@ export default function SignUp({ onClose, onLogin }) {
             }
 
         </div>
+        <MessageModal message={message} onClose={() => setMessage("")} />
     </div>
   );
 }

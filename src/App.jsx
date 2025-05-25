@@ -35,11 +35,9 @@ const App = () => {
           <Route path='/quiz' element={<Quiz />}/>
           <Route path='/dashboard' element={<Dashboard />}/>
           <Route path='/profile' element={<UserProfile />}/>
-          <Route path='/settings' element={<Settings />}/>
           <Route path='/admin' element={<AdminPanel />}/>
           <Route path='/flashcard-content' element={<FlashContent />}/>
           <Route path='/quiz-content' element={<QuizContent />}/>
-          
         </Route>
       </Routes>
     </>

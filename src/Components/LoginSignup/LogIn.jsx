@@ -5,6 +5,7 @@ import usernameImg from '../../Webpages/img/icons8-username-48.png';
 import passImg from '../../Webpages/img/icons8-password-48.png';
 import SignUp from './SignUp';
 import ForgotPassword from "./ForgotPass";
+import MessageModal from './MessageModal';
 
 export default function LogIn({ onLogin, onClose }) {
     const [username, setUsername] = useState("");
@@ -12,6 +13,7 @@ export default function LogIn({ onLogin, onClose }) {
     const [showLogin, setShowLogin] = useState(true);
     const [showSignUp, setShowSignUp] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false); 
+    const [message, setMessage] = useState("");
 
     const handleSignUp = (path) => {
         if (loggedInUser) {
@@ -31,12 +33,12 @@ export default function LogIn({ onLogin, onClose }) {
         const user = users.find((u) => u.username === username);
 
         if (!user) {
-        alert("Username does not exist.");
+        setMessage("Username does not exist.");
         return;
         }
 
         if (user.password !== password) {
-        alert("Incorrect password.");
+        setMessage("Incorrect password.");
         return;
         }
         
@@ -48,7 +50,7 @@ export default function LogIn({ onLogin, onClose }) {
         })
         .catch((err) => {
         console.error("Fetch error:", err);
-        alert("Server error. Please try again later.");
+        setMessage("Server error. Please try again later.");
         });
     };
     
@@ -116,6 +118,7 @@ export default function LogIn({ onLogin, onClose }) {
         {showForgotPassword && (
         <ForgotPassword onClose={() => setShowForgotPassword(false)} />
       )}
+      <MessageModal message={message} onClose={() => setMessage("")} />
     </div>
     
   );

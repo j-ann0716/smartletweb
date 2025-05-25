@@ -5,6 +5,7 @@ import FlashcardTable from "../Flashcard/FlashcardTable";
 import QuizCreate from "../Quiz/QuizCreate";
 import QuizTable from "../Quiz/QuizTable";
 import QuizScores from "../Quiz/QuizScore";
+import MessageModal from './MessageModal';
 
 export default function TabPanel() {
   const [activeTab, setActiveTab] = useState("tab1");
@@ -13,6 +14,7 @@ export default function TabPanel() {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
+  const [message, setMessage] = useState("");
 
 
   const tabs = [
@@ -79,13 +81,13 @@ export default function TabPanel() {
       const data = await res.json();
 
       if (data.success) {
-        alert(`Deleted: ${card.reviewer_title}`);
+        setMessage(`Deleted: ${card.reviewer_title}`);
         setFlashcards((prev) => prev.filter((f) => f.reviewer_id !== card.reviewer_id));
       } else {
-        alert("Delete failed: " + (data.error || "Unknown error"));
+        setMessage("Delete failed: " + (data.error || "Unknown error"));
       }
     } catch (err) {
-      alert("Delete failed: " + err.message);
+      setMessage("Delete failed: " + err.message);
     } finally {
       setDeletingId(null);
     }
@@ -114,13 +116,13 @@ export default function TabPanel() {
     const data = await res.json();
 
     if (data.success) {
-      alert(`Deleted: ${quiz.quiz_title}`);
+      setMessage(`Deleted: ${quiz.quiz_title}`);
       setQuizzes((prev) => prev.filter((q) => q.quiz_id !== quiz.quiz_id));
     } else {
-      alert("Delete failed: " + (data.error || "Unknown error"));
+      setMessage("Delete failed: " + (data.error || "Unknown error"));
     }
   } catch (err) {
-    alert("Delete failed: " + err.message);
+    setMessage("Delete failed: " + err.message);
   } finally {
     setDeletingId(null);
   }
@@ -198,6 +200,7 @@ export default function TabPanel() {
   };
 
   return (
+    <>
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F8F4F9] text-[#533d64]">
       {/* Sidebar */}
       <div className="w-full md:w-64 p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
@@ -229,5 +232,7 @@ export default function TabPanel() {
         </div>
       </div>
     </div>
+    <MessageModal message={message} onClose={() => setMessage("")} />
+    </>
   );
 }

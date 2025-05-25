@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import backArrow from "../../Webpages/img/icons8-back-96.png";
 import BackBtn from "../BackBtn";
+import MessageModal from './MessageModal';
 
 export default function QuizContent() {
   const navigate = useNavigate();
@@ -19,12 +20,14 @@ export default function QuizContent() {
   const [quizMeta, setQuizMeta] = useState({});
   const [loading, setLoading] = useState(true);
 
+  const [message, setMessage] = useState("");
+
   useEffect(() => {
     let isMounted = true;
 
     const fetchQuizData = async () => {
       if (!quizId) {
-        alert('Quiz ID not provided in the URL.');
+        setMessage('Quiz ID not provided in the URL.');
         setLoading(false);
         return;
       }
@@ -36,7 +39,7 @@ export default function QuizContent() {
         if (!isMounted) return;
 
         if (!data || !Array.isArray(data.questions)) {
-          alert('Invalid quiz format. Please contact support.');
+          setMessage('Invalid quiz format. Please contact support.');
           setLoading(false);
           return;
         }
@@ -64,7 +67,7 @@ export default function QuizContent() {
         setQuizMeta(data.meta || {});
       } catch (err) {
         console.error('Quiz fetch error:', err);
-        alert('Failed to load quiz. Please try again.');
+        setMessage('Failed to load quiz. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -105,7 +108,7 @@ export default function QuizContent() {
   const handleFinish = async () => {
     const user = JSON.parse(localStorage.getItem('loggedInUser'));
     if (!user?.user_id) {
-      alert('User not logged in.');
+      setMessage('User not logged in.');
       return;
     }
 
@@ -131,14 +134,14 @@ export default function QuizContent() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(`Quiz completed! You scored ${correctCount} out of ${questions.length}.`);
+        setMessage(`Quiz completed! You scored ${correctCount} out of ${questions.length}.`);
         navigate('/quiz');
       } else {
-        alert(data.message || 'Failed to submit score.');
+        setMessage(data.message || 'Failed to submit score.');
       }
     } catch (err) {
       console.error('Score submission error:', err);
-      alert('An error occurred while submitting your score.');
+      setMessage('An error occurred while submitting your score.');
     }
   };
 
@@ -161,6 +164,7 @@ export default function QuizContent() {
   const current = questions[currentIndex];
 
   return (
+    <>
     <div className="h-[590px] px-5 py-5 md:px-25 md:py-10">
       <div className="mb-5">
         <button onClick={() => navigate('/quiz')} className="flex items-center text-[#533d64]">
@@ -226,5 +230,7 @@ export default function QuizContent() {
         </div>
       </div>
     </div>
+    <MessageModal message={message} onClose={() => setMessage("")} />
+    </>
   );
 }
