@@ -95,12 +95,12 @@ export default function Settings() {
 
   return (
     <div className="space-y-4">
-      <button
+      {/* <button
         onClick={toggleDarkMode}
         className="w-full bg-[#ffffff] text-[#533d64] py-3 px-6 rounded-lg shadow hover:bg-[#ebebeb] transition-all"
       >
         {darkMode ? "Disable Dark Mode" : "Enable Dark Mode"}
-      </button>
+      </button> */}
 
       <button
         onClick={handleDeleteAccount}

@@ -44,7 +44,15 @@ export default function LogIn({ onLogin, onClose }) {
         
         localStorage.setItem("loggedInUser", JSON.stringify(user));
         localStorage.setItem("user", JSON.stringify(user));
-
+        fetch("https://forreact.alwaysdata.net/logActivity.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: user.user_id,
+                account_type: user.account_type,
+                activity: "User logged in"
+            })
+        });
 
         onLogin(user.username);
         })

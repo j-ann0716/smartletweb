@@ -34,7 +34,16 @@ export default function ForgotPassword({ onClose }) {
 
         if (res.ok) {
             setMessage("Password updated successfully.");
-        } else {
+                await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        user_id: data.user_id, 
+                        account_type: data.account_type,
+                        activity: "Password reset"
+                    })
+                });
+            } else {
             setMessage(data.message || "Error resetting password.");
         }
         } catch (err) {

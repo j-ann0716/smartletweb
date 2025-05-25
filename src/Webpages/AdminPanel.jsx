@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import UserManagement from "../Components/AdminPanel/UserManagement";
+import QuizFlashcardPanel from "../Components/AdminPanel/QuizFlashcardPanel";
 
 export default function AdminPanel() {
   document.title = "Smartlet - Admin Panel";
@@ -88,8 +89,8 @@ export default function AdminPanel() {
     switch (activeTab) {
       case "User Data":
         return <div>{renderUserTable()}</div>;
-      case "Flashcards & Quizzes":
-        return <div>Flashcard & Quizzes</div>;
+      case "Quizzes & Flashcards":
+        return <QuizFlashcardPanel />;
       case "Activity Log":
         return <div>Activity Logs</div>;
       default:
@@ -105,7 +106,7 @@ export default function AdminPanel() {
           Admin Panel
         </h2>
         <ul className="space-y-2 md:space-y-4">
-          {["User Data", "Flashcards & Quizzes", "Activity Log"].map((tab) => (
+          {["User Data", "Quizzes & Flashcards", "Activity Log"].map((tab) => (
             <li key={tab}>
               <button
                 className={`w-full text-left px-4 py-2 shadow border-[#533d64]/20 rounded-lg transition-all ${

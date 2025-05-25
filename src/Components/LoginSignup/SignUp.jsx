@@ -65,8 +65,16 @@ export default function SignUp({ onClose, onLogin }) {
 
       if (!res.ok) throw new Error("Failed to create account");
 
-      const createdUser = await res.json(); // 👈 Get the actual saved user from backend
-
+      const createdUser = await res.json(); 
+      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: createdUser.user_id,
+          account_type: "User",
+          activity: "User signed up"
+        })
+      });
       setMessage("Account created successfully!");
       onClose();
       window.location.reload();
