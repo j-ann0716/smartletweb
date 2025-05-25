@@ -41,6 +41,8 @@ export default function LogIn({ onLogin, onClose }) {
         }
         
         localStorage.setItem("loggedInUser", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(user));
+
 
         onLogin(user.username);
         })
