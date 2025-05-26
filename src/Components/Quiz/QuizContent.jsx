@@ -132,9 +132,25 @@ export default function QuizContent() {
       });
 
       const data = await res.json();
-
+      alert(`Quiz completed! You scored ${correctCount} out of ${questions.length}.`);
       if (res.ok) {
-        setMessage(`Quiz completed! You scored ${correctCount} out of ${questions.length}.`);
+        try {
+          // Log the activity
+          await fetch('https://forreact.alwaysdata.net/logActivity.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user.user_id,
+              account_type: user.account_type || 'User',
+              activity: `User answered quiz (${quizTitle})`,
+            }),
+          });
+          
+        } catch (logErr) {
+          console.warn('Activity logging failed:', logErr);
+        }
+
+        
         navigate('/quiz');
       } else {
         setMessage(data.message || 'Failed to submit score.');
@@ -144,6 +160,7 @@ export default function QuizContent() {
       setMessage('An error occurred while submitting your score.');
     }
   };
+
 
   if (loading) {
     return (

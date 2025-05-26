@@ -26,6 +26,25 @@ export default function QuizCreate({ onClose }) {
     setShowFormatError(false);
   };
 
+  // Log activity helper
+  const logActivity = async (activity) => {
+    if (!loggedInUser) return;
+
+    try {
+      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: loggedInUser.user_id,
+          account_type: loggedInUser.account_type || "User",
+          activity,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to log activity:", err);
+    }
+  };
+
   const handleUpload = async () => {
     setMessage("");
     setShowFormatError(false);
@@ -45,7 +64,7 @@ export default function QuizCreate({ onClose }) {
       }
       try {
         text = await file.text();
-      } catch (error) {
+      } catch {
         setMessage("Failed to read file. Try selecting it again.");
         return;
       }
@@ -88,16 +107,24 @@ export default function QuizCreate({ onClose }) {
       });
 
       const result = await res.json();
+
       if (result.success) {
         setMessage("Quiz uploaded successfully.");
         setFile(null);
         setManualText("");
         setTitle("");
         if (fileInputRef.current) fileInputRef.current.value = "";
+
+        // Log activity based on mode
+        if (mode === "upload") {
+          await logActivity("User uploaded a quiz file");
+        } else {
+          await logActivity("User created a quiz manually");
+        }
       } else {
         setMessage("Error: " + result.message);
       }
-    } catch (err) {
+    } catch {
       setMessage("Network or server error.");
     }
   };
@@ -144,7 +171,7 @@ export default function QuizCreate({ onClose }) {
 
   return (
     <>
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-xl mx-auto mt-10" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white p-6 rounded shadow-md w-full max-w-xl mx-auto mt-10" onClick={e => e.stopPropagation()}>
         <div className="flex justify-end">
           <button onClick={onClose}>
             <BackBtn image={closeImg} />
@@ -153,26 +180,53 @@ export default function QuizCreate({ onClose }) {
         <h2 className="text-xl font-bold mb-4">Create Quiz</h2>
 
         <div className="flex justify-center mb-4 gap-4">
-          <button onClick={() => setMode("upload")} className={`px-4 py-2 rounded text-white ${mode === "upload" ? "bg-[#BC80BA]" : "bg-gray-400"}`}>
+          <button
+            onClick={() => setMode("upload")}
+            className={`px-4 py-2 rounded text-white ${mode === "upload" ? "bg-[#BC80BA]" : "bg-gray-400"}`}
+          >
             Upload File
           </button>
-          <button onClick={() => setMode("manual")} className={`px-4 py-2 rounded text-white ${mode === "manual" ? "bg-[#BC80BA]" : "bg-gray-400"}`}>
+          <button
+            onClick={() => setMode("manual")}
+            className={`px-4 py-2 rounded text-white ${mode === "manual" ? "bg-[#BC80BA]" : "bg-gray-400"}`}
+          >
             Type Manually
           </button>
         </div>
 
         {mode === "manual" && (
           <>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter title" className="mb-4 border border-gray-300 p-2 rounded w-full text-sm" />
-            <textarea rows="10" value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="Type your quiz content here..." className="mb-4 border border-gray-300 p-2 rounded w-full text-sm" />
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter title"
+              className="mb-4 border border-gray-300 p-2 rounded w-full text-sm"
+            />
+            <textarea
+              rows="10"
+              value={manualText}
+              onChange={(e) => setManualText(e.target.value)}
+              placeholder="Type your quiz content here..."
+              className="mb-4 border border-gray-300 p-2 rounded w-full text-sm"
+            />
           </>
         )}
 
         {mode === "upload" && (
-          <input type="file" accept=".txt" ref={fileInputRef} onChange={handleFileChange} className="mb-4 border border-gray-300 p-2 rounded w-full text-sm" />
+          <input
+            type="file"
+            accept=".txt"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="mb-4 border border-gray-300 p-2 rounded w-full text-sm"
+          />
         )}
 
-        <button onClick={handleUpload} className="bg-[#BC80BA] text-white px-4 py-2 rounded hover:bg-[#A669A4] w-full">
+        <button
+          onClick={handleUpload}
+          className="bg-[#BC80BA] text-white px-4 py-2 rounded hover:bg-[#A669A4] w-full"
+        >
           Submit
         </button>
       </div>
@@ -197,15 +251,13 @@ export default function QuizCreate({ onClose }) {
       {message && (
         <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
           <div className="bg-white px-5 py-5 rounded-xl shadow-lg w-[80%] sm:w-[35%] relative">
-            <div className="w-full">
-              <div className="flex justify-end">
-                <button onClick={() => setMessage("")}>
-                  <BackBtn image={closeImg} />
-                </button>
-              </div>
-              <div className="flex justify-center items-center">
-                <p className="text-[18px] text-[#533d64] text-center mb-5">{message}</p>
-              </div>
+            <div className="flex justify-end">
+              <button onClick={() => setMessage("")}>
+                <BackBtn image={closeImg} />
+              </button>
+            </div>
+            <div className="flex justify-center items-center">
+              <p className="text-[18px] text-[#533d64] text-center mb-5">{message}</p>
             </div>
           </div>
         </div>

@@ -2,9 +2,27 @@ import React, { useState } from "react";
 import EditQuiz from "./EditQuiz"; 
 import MessageModal from "../MessageModal";
 
-export default function QuizTable({  quizzes, loggedInUser, onEdit, onDelete  }) {
+export default function QuizTable({ quizzes, loggedInUser, onEdit, onDelete }) {
   const [editingQuiz, setEditingQuiz] = useState(null);
   const [message, setMessage] = useState("");
+
+  // Log activity helper
+  const logActivity = async (activity) => {
+    if (!loggedInUser) return;
+    try {
+      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: loggedInUser.user_id,
+          account_type: loggedInUser.account_type || "User",
+          activity,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to log activity:", err);
+    }
+  };
 
   const handleEditClick = (quiz) => {
     if (loggedInUser?.user_id !== quiz.creator_id) {
@@ -12,6 +30,16 @@ export default function QuizTable({  quizzes, loggedInUser, onEdit, onDelete  })
       return;
     }
     setEditingQuiz(quiz);
+    logActivity(`User edited quiz "${quiz.quiz_title}"`);
+  };
+
+  const handleDeleteClick = (quiz) => {
+    if (!loggedInUser) {
+      setMessage("You need to be logged in to delete a quiz.");
+      return;
+    }
+    onDelete(quiz);
+    logActivity(`User deleted quiz "${quiz.quiz_title}"`);
   };
 
   const handleCloseEdit = () => {
@@ -53,7 +81,7 @@ export default function QuizTable({  quizzes, loggedInUser, onEdit, onDelete  })
                     </button>
                     <button
                       className="text-sm bg-red-500 text-[#ffffff] hover:bg-red-700 px-3 py-1 rounded"
-                      onClick={() => onDelete(quiz)}
+                      onClick={() => handleDeleteClick(quiz)}
                     >
                       Delete
                     </button>
@@ -77,7 +105,7 @@ export default function QuizTable({  quizzes, loggedInUser, onEdit, onDelete  })
           <EditQuiz quizData={editingQuiz} onClose={handleCloseEdit} />
         </div>
       )}
-      {/* Message modal */}
+
       <MessageModal message={message} onClose={() => setMessage("")} />
     </>
   );

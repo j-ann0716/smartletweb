@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import UserManagement from "../Components/AdminPanel/UserManagement";
 import QuizFlashcardPanel from "../Components/AdminPanel/QuizFlashcardPanel";
+import ActivityLog from "../Components/AdminPanel/ActivityLog";
 
 export default function AdminPanel() {
   document.title = "Smartlet - Admin Panel";
@@ -92,7 +93,7 @@ export default function AdminPanel() {
       case "Quizzes & Flashcards":
         return <QuizFlashcardPanel />;
       case "Activity Log":
-        return <div>Activity Logs</div>;
+        return <ActivityLog />;
       default:
         return null;
     }

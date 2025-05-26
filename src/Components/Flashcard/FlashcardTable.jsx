@@ -2,9 +2,27 @@ import React, { useState } from "react";
 import EditFlashcard from "./EditFlashcard";
 import MessageModal from "../MessageModal";
 
-export default function FlashcardTable({ flashcards, loggedInUser, onDelete, deletingId }) {
+export default function FlashcardTable({ flashcards, loggedInUser, onEdit, onDelete, deletingId }) {
   const [editingFlashcard, setEditingFlashcard] = useState(null);
   const [message, setMessage] = useState("");
+
+  // Log activity helper
+  const logActivity = async (activity) => {
+    if (!loggedInUser) return;
+    try {
+      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: loggedInUser.user_id,
+          account_type: loggedInUser.account_type || "User",
+          activity,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to log activity:", err);
+    }
+  };
 
   const handleEditClick = (card) => {
     if (loggedInUser?.user_id !== card.creator_id) {
@@ -12,6 +30,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
       return;
     }
     setEditingFlashcard(card);
+    logActivity(`User edited flashcard "${card.reviewer_title}"`);
   };
 
   const handleCloseEdit = () => {
@@ -24,6 +43,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
       return;
     }
     onDelete(card);
+    logActivity(`User deleted flashcard "${card.reviewer_title}"`);
   };
 
   return (
@@ -32,7 +52,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
         <table className="min-w-full text-left text-[16px]">
           <thead>
             <tr className="border-b border-[#BC80BA] text-[#4B0049] font-semibold">
-              <th className="px-4 py-2">File</th>
+              <th className="px-4 py-2">Title</th>
               <th className="px-4 py-2 text-center">Author</th>
               <th className="px-4 py-2 text-center">Time Uploaded</th>
               <th className="py-2 text-end pr-15">Action</th>
@@ -55,9 +75,11 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
                     <button
                       onClick={() => handleDeleteClick(card)}
                       disabled={deletingId === card.reviewer_id}
-                      className={`bg-red-500 text-[#ffffff] hover:bg-red-700 px-3 py-1 rounded ${deletingId === card.reviewer_id ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className={`bg-red-500 text-[#ffffff] hover:bg-red-700 px-3 py-1 rounded ${
+                        deletingId === card.reviewer_id ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     >
-                      {deletingId === card.reviewer_id ? "Delete" : "Delete"}
+                      Delete
                     </button>
                   </div>
                 </td>
@@ -65,7 +87,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
             ))}
             {flashcards.length === 0 && (
               <tr>
-                <td colSpan="4" className="text-center py-4 text-gray-500">
+                <td colSpan="4" className="py-4 text-gray-500 text-center">
                   No flashcards uploaded yet.
                 </td>
               </tr>
@@ -79,6 +101,7 @@ export default function FlashcardTable({ flashcards, loggedInUser, onDelete, del
           <EditFlashcard flashcardData={editingFlashcard} onClose={handleCloseEdit} />
         </div>
       )}
+
       <MessageModal message={message} onClose={() => setMessage("")} />
     </>
   );

@@ -26,6 +26,33 @@ export default function FlashcardCreate({ onClose }) {
     setShowFormatError(false);
   };
 
+  const logActivity = async (activity) => {
+    if (!loggedInUser) {
+      console.error("User not logged in.");
+      return;
+    }
+
+    const logData = {
+      user_id: loggedInUser.user_id,
+      account_type: loggedInUser.account_type || "User",
+      activity,
+    };
+
+    try {
+      const res = await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(logData),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to log activity:", activity);
+      }
+    } catch (err) {
+      console.error("Error logging activity:", err);
+    }
+  };
+
   const handleUpload = async () => {
     setMessage("");
     setShowFormatError(false);
@@ -67,63 +94,71 @@ export default function FlashcardCreate({ onClose }) {
     const reviewer_id = generateId("Rev");
     const uploaded_date = new Date().toISOString();
 
-    const reviewerRes = await fetch("/api/insertreviewer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        reviewer_id,
-        reviewer_title,
-        creator_id: loggedInUser.user_id,
-        uploaded_date,
-      }),
-    });
-
-    if (!reviewerRes.ok) {
-      setMessage("Failed to insert reviewer.");
-      return;
-    }
-
-    for (let i = 0; i < parsed.questions.length; i++) {
-      const q = parsed.questions[i];
-      const r_ques_id = generateId("RQ");
-
-      const questionRes = await fetch("/api/insertquestion", {
+    try {
+      const reviewerRes = await fetch("/api/insertreviewer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          r_ques_id,
-          reviewer_ques: q.question,
-          number_count: i + 1,
           reviewer_id,
+          reviewer_title,
+          creator_id: loggedInUser.user_id,
+          uploaded_date,
         }),
       });
 
-      if (!questionRes.ok) {
-        setMessage(`Failed to insert question ${i + 1}`);
+      if (!reviewerRes.ok) {
+        setMessage("Failed to insert reviewer.");
         return;
       }
 
-      const answerRes = await fetch("/api/insertanswer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rev_ans_id: generateId("QA"),
-          reviewer_answer: q.answer,
-          r_ques_id,
-        }),
-      });
+      for (let i = 0; i < parsed.questions.length; i++) {
+        const q = parsed.questions[i];
+        const r_ques_id = generateId("RQ");
 
-      if (!answerRes.ok) {
-        setMessage(`Failed to insert answer for question ${i + 1}`);
-        return;
+        const questionRes = await fetch("/api/insertquestion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            r_ques_id,
+            reviewer_ques: q.question,
+            number_count: i + 1,
+            reviewer_id,
+          }),
+        });
+
+        if (!questionRes.ok) {
+          setMessage(`Failed to insert question ${i + 1}`);
+          return;
+        }
+
+        const answerRes = await fetch("/api/insertanswer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rev_ans_id: generateId("QA"),
+            reviewer_answer: q.answer,
+            r_ques_id,
+          }),
+        });
+
+        if (!answerRes.ok) {
+          setMessage(`Failed to insert answer for question ${i + 1}`);
+          return;
+        }
       }
+
+      setMessage("Flashcard uploaded successfully.");
+      setFile(null);
+      setManualText("");
+      setTitle("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      // Log successful flashcard creation
+      await logActivity("User created a flashcard set");
+    } catch (err) {
+      console.error(err);
+      setMessage("An error occurred while uploading flashcards.");
     }
-
-    setMessage("Flashcard uploaded successfully.");
-    setFile(null);
-    setManualText("");
-    setTitle("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   function parseQuestions(text) {
