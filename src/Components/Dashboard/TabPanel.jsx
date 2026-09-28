@@ -6,6 +6,7 @@ import QuizCreate from "../Quiz/QuizCreate";
 import QuizTable from "../Quiz/QuizTable";
 import QuizScores from "../Quiz/QuizScore";
 import MessageModal from '../MessageModal';
+import { supabase } from "../../../api/supabaseServer";
 
 export default function TabPanel() {
   const [activeTab, setActiveTab] = useState("tab1");
@@ -15,7 +16,6 @@ export default function TabPanel() {
   const [quizzes, setQuizzes] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState("");
-
 
   const tabs = [
     { id: "tab1", label: "Reviewer Progress" },
@@ -36,10 +36,13 @@ export default function TabPanel() {
 
   const fetchFlashcards = async () => {
     try {
-      const res = await fetch("https://forreact.alwaysdata.net/getFlashcardTitle.php");
-      const data = await res.json();
-      const userFlashcards = data.filter(card => card.creator_id === loggedInUser.user_id);
-      setFlashcards(userFlashcards);
+      const { data, error } = await supabase
+        .from("reviewer_tbl")
+        .select("*")
+        .eq("creator_id", loggedInUser.user_id);
+
+      if (error) throw error;
+      setFlashcards(data || []);
     } catch (error) {
       console.error("Failed to fetch flashcards:", error);
     }
@@ -47,10 +50,13 @@ export default function TabPanel() {
 
   const fetchQuizzes = async () => {
     try {
-      const res = await fetch("https://forreact.alwaysdata.net/getQuiz.php");
-      const data = await res.json();
-      const userQuizzes = data.filter(quiz => quiz.creator_id === loggedInUser.user_id);
-      setQuizzes(userQuizzes);
+      const { data, error } = await supabase
+        .from("quiz_tbl")
+        .select("*")
+        .eq("creator_id", loggedInUser.user_id);
+
+      if (error) throw error;
+      setQuizzes(data || []);
     } catch (error) {
       console.error("Failed to fetch quizzes:", error);
     }
@@ -70,22 +76,15 @@ export default function TabPanel() {
     setDeletingId(card.reviewer_id);
 
     try {
-      const res = await fetch(`https://forreact.alwaysdata.net/deleteFlashcard.php`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ reviewer_id: card.reviewer_id }),
-      });
+      const { error } = await supabase
+        .from("reviewer_tbl")
+        .delete()
+        .eq("reviewer_id", card.reviewer_id);
 
-      const data = await res.json();
+      if (error) throw error;
 
-      if (data.success) {
-        setMessage(`Deleted: ${card.reviewer_title}`);
-        setFlashcards((prev) => prev.filter((f) => f.reviewer_id !== card.reviewer_id));
-      } else {
-        setMessage("Delete failed: " + (data.error || "Unknown error"));
-      }
+      setMessage(`Deleted: ${card.reviewer_title}`);
+      setFlashcards((prev) => prev.filter((f) => f.reviewer_id !== card.reviewer_id));
     } catch (err) {
       setMessage("Delete failed: " + err.message);
     } finally {
@@ -100,34 +99,26 @@ export default function TabPanel() {
   };
 
   const handleQuizDelete = async (quiz) => {
-  if (!window.confirm(`Are you sure you want to delete "${quiz.quiz_title}"? This action cannot be undone.`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${quiz.quiz_title}"? This action cannot be undone.`)) return;
 
-  setDeletingId(quiz.quiz_id);
+    setDeletingId(quiz.quiz_id);
 
-  try {
-    const res = await fetch("https://forreact.alwaysdata.net/deleteQuiz.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ quiz_id: quiz.quiz_id }),
-    });
+    try {
+      const { error } = await supabase
+        .from("quiz_tbl")
+        .delete()
+        .eq("quiz_id", quiz.quiz_id);
 
-    const data = await res.json();
+      if (error) throw error;
 
-    if (data.success) {
       setMessage(`Deleted: ${quiz.quiz_title}`);
       setQuizzes((prev) => prev.filter((q) => q.quiz_id !== quiz.quiz_id));
-    } else {
-      setMessage("Delete failed: " + (data.error || "Unknown error"));
+    } catch (err) {
+      setMessage("Delete failed: " + err.message);
+    } finally {
+      setDeletingId(null);
     }
-  } catch (err) {
-    setMessage("Delete failed: " + err.message);
-  } finally {
-    setDeletingId(null);
-  }
-};
-
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -201,38 +192,38 @@ export default function TabPanel() {
 
   return (
     <>
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#F8F4F9] text-[#533d64]">
-      {/* Sidebar */}
-      <div className="w-full md:w-64 p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
-        <h2 className="text-2xl font-bold mb-8">Dashboard</h2>
-        <ul className="space-y-2 md:space-y-4">
-          {tabs.map((tab) => (
-            <li key={tab.id}>
-              <button
-                className={`w-full text-left px-4 py-2 shadow border-[#533d64]/20 rounded-lg transition-all ${
-                  activeTab === tab.id
-                    ? "bg-[#BC80BA] text-white"
-                    : "hover:bg-gray-100"
-                }`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <div className="flex flex-col md:flex-row min-h-screen bg-[#F8F4F9] text-[#533d64]">
+        <div className="w-full md:w-64 p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
+          <h2 className="text-2xl font-bold mb-8">Dashboard</h2>
+          <ul className="space-y-2 md:space-y-4">
+            {tabs.map((tab) => (
+              <li key={tab.id}>
+                <button
+                  className={`w-full text-left px-4 py-2 shadow border-[#533d64]/20 rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? "bg-[#BC80BA] text-white"
+                      : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 p-3 md:p-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h1 className="text-[#533d64] text-[28px] md:text-[22px] mb-3 font-semibold font-nunito">{tabs.find(t => t.id === activeTab)?.label}</h1>
-          <hr className="w-full border-[#533d64]/50 mb-6" />
-          {renderTabContent()}
+        <div className="flex-1 p-3 md:p-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h1 className="text-[#533d64] text-[28px] md:text-[22px] mb-3 font-semibold font-nunito">
+              {tabs.find((t) => t.id === activeTab)?.label}
+            </h1>
+            <hr className="w-full border-[#533d64]/50 mb-6" />
+            {renderTabContent()}
+          </div>
         </div>
       </div>
-    </div>
-    <MessageModal message={message} onClose={() => setMessage("")} />
+      <MessageModal message={message} onClose={() => setMessage("")} />
     </>
   );
 }
