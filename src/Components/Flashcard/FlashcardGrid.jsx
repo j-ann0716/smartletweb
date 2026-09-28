@@ -10,7 +10,7 @@ export default function FlashcardGrid() {
   const [randomCards, setRandomCards] = useState([]);
 
   useEffect(() => {
-    fetch('https://forreact.alwaysdata.net/getFlashcardTitle.php')
+    fetch('/api/getUserData?type=flashcardTitles')
       .then((res) => res.json())
       .then((result) => {
         if (Array.isArray(result)) {
@@ -18,7 +18,7 @@ export default function FlashcardGrid() {
         } else {
             console.error('Unexpected response format:', result);
         }
-        })
+      })
       .catch((error) => console.error('Error fetching flashcards:', error));
   }, []);
 
@@ -32,6 +32,5 @@ export default function FlashcardGrid() {
         ))}
       </div>
     </div>
-
   );
 }
