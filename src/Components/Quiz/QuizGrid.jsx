@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { QuizBox } from './QuizBox';
 
-
 function getRandomItems(arr, count) {
   const shuffled = [...arr].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
@@ -11,7 +10,7 @@ export default function QuizGrid() {
   const [randomCards, setRandomCards] = useState([]);
 
   useEffect(() => {
-    fetch('https://forreact.alwaysdata.net/getQuizTitle.php')
+    fetch('/api/getUserData?type=quizzes')
       .then((res) => res.json())
       .then((result) => {
         if (Array.isArray(result)) {
@@ -19,8 +18,8 @@ export default function QuizGrid() {
         } else {
             console.error('Unexpected response format:', result);
         }
-        })
-      .catch((error) => console.error('Error fetching flashcards:', error));
+      })
+      .catch((error) => console.error('Error fetching quiz list:', error));
   }, []);
 
   return (
@@ -33,6 +32,5 @@ export default function QuizGrid() {
         ))}
       </div>
     </div>
-
   );
 }
