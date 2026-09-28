@@ -6,7 +6,6 @@ import QuizCreate from "../Quiz/QuizCreate";
 import QuizTable from "../Quiz/QuizTable";
 import QuizScores from "../Quiz/QuizScore";
 import MessageModal from '../MessageModal';
-import { supabase } from "../../../api/supabaseServer";
 
 export default function TabPanel() {
   const [activeTab, setActiveTab] = useState("tab1");
@@ -36,13 +35,9 @@ export default function TabPanel() {
 
   const fetchFlashcards = async () => {
     try {
-      const { data, error } = await supabase
-        .from("reviewer_tbl")
-        .select("*")
-        .eq("creator_id", loggedInUser.user_id);
-
-      if (error) throw error;
-      setFlashcards(data || []);
+      const res = await fetch(`/api/getUserData?type=flashcards&user_id=${loggedInUser.user_id}`);
+      const data = await res.json();
+      setFlashcards(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch flashcards:", error);
     }
@@ -50,13 +45,9 @@ export default function TabPanel() {
 
   const fetchQuizzes = async () => {
     try {
-      const { data, error } = await supabase
-        .from("quiz_tbl")
-        .select("*")
-        .eq("creator_id", loggedInUser.user_id);
-
-      if (error) throw error;
-      setQuizzes(data || []);
+      const res = await fetch(`/api/getUserData?type=quizzes&user_id=${loggedInUser.user_id}`);
+      const data = await res.json();
+      setQuizzes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch quizzes:", error);
     }
@@ -71,20 +62,23 @@ export default function TabPanel() {
   };
 
   const handleFlashcardDelete = async (card) => {
-    if (!window.confirm(`Are you sure you want to delete "${card.reviewer_title}"? This action cannot be undone.`)) return;
-
+    if (!window.confirm(`Are you sure you want to delete "${card.reviewer_title}"?`)) return;
     setDeletingId(card.reviewer_id);
 
     try {
-      const { error } = await supabase
-        .from("reviewer_tbl")
-        .delete()
-        .eq("reviewer_id", card.reviewer_id);
+      const res = await fetch("/api/editflashcard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", reviewer_id: card.reviewer_id }),
+      });
+      const data = await res.json();
 
-      if (error) throw error;
-
-      setMessage(`Deleted: ${card.reviewer_title}`);
-      setFlashcards((prev) => prev.filter((f) => f.reviewer_id !== card.reviewer_id));
+      if (res.ok) {
+        setMessage(`Deleted: ${card.reviewer_title}`);
+        setFlashcards((prev) => prev.filter((f) => f.reviewer_id !== card.reviewer_id));
+      } else {
+        setMessage("Delete failed: " + (data.error || "Unknown error"));
+      }
     } catch (err) {
       setMessage("Delete failed: " + err.message);
     } finally {
@@ -99,20 +93,23 @@ export default function TabPanel() {
   };
 
   const handleQuizDelete = async (quiz) => {
-    if (!window.confirm(`Are you sure you want to delete "${quiz.quiz_title}"? This action cannot be undone.`)) return;
-
+    if (!window.confirm(`Are you sure you want to delete "${quiz.quiz_title}"?`)) return;
     setDeletingId(quiz.quiz_id);
 
     try {
-      const { error } = await supabase
-        .from("quiz_tbl")
-        .delete()
-        .eq("quiz_id", quiz.quiz_id);
+      const res = await fetch("/api/editflashcard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteQuiz", quiz_id: quiz.quiz_id }),
+      });
+      const data = await res.json();
 
-      if (error) throw error;
-
-      setMessage(`Deleted: ${quiz.quiz_title}`);
-      setQuizzes((prev) => prev.filter((q) => q.quiz_id !== quiz.quiz_id));
+      if (res.ok) {
+        setMessage(`Deleted: ${quiz.quiz_title}`);
+        setQuizzes((prev) => prev.filter((q) => q.quiz_id !== quiz.quiz_id));
+      } else {
+        setMessage("Delete failed: " + (data.error || "Unknown error"));
+      }
     } catch (err) {
       setMessage("Delete failed: " + err.message);
     } finally {
