@@ -6,31 +6,12 @@ export default function QuizTable({ quizzes, loggedInUser, onEdit, onDelete }) {
   const [editingQuiz, setEditingQuiz] = useState(null);
   const [message, setMessage] = useState("");
 
-  // Log activity helper
-  const logActivity = async (activity) => {
-    if (!loggedInUser) return;
-    try {
-      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: loggedInUser.user_id,
-          account_type: loggedInUser.account_type || "User",
-          activity,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to log activity:", err);
-    }
-  };
-
   const handleEditClick = (quiz) => {
     if (loggedInUser?.user_id !== quiz.creator_id) {
       setMessage("You can only edit quizzes you created.");
       return;
     }
     setEditingQuiz(quiz);
-    logActivity(`User edited quiz "${quiz.quiz_title}"`);
   };
 
   const handleDeleteClick = (quiz) => {
@@ -39,7 +20,6 @@ export default function QuizTable({ quizzes, loggedInUser, onEdit, onDelete }) {
       return;
     }
     onDelete(quiz);
-    logActivity(`User deleted quiz "${quiz.quiz_title}"`);
   };
 
   const handleCloseEdit = () => {
@@ -91,7 +71,7 @@ export default function QuizTable({ quizzes, loggedInUser, onEdit, onDelete }) {
             ))}
             {quizzes.length === 0 && (
               <tr>
-                <td colSpan="5" className="py-4 text-gray-500">
+                <td colSpan="5" className="py-4 text-gray-500 text-center">
                   No quizzes uploaded yet.
                 </td>
               </tr>
