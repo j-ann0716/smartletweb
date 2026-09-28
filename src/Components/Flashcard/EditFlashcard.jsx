@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import formatImgFlashcard from "../../Webpages/img/formatFCImg.png";
 import closeImg from "../../Webpages/img/icons8-close-48.png";
 import BackBtn from "../BackBtn";
+import { supabase } from "../../supabaseClient"; // Adjust path to your supabase client
 
 export default function EditFlashcard({ flashcardData, onClose }) {
   const [file, setFile] = useState(null);
@@ -35,8 +36,7 @@ export default function EditFlashcard({ flashcardData, onClose }) {
 
         if (answerLine && answerLine.startsWith("-") && (!nextLine || nextLine === "")) {
           const answer = answerLine.substring(1).trim();
-          const r_ques_id = "RQ" + Math.floor(10000000 + Math.random() * 90000000);
-          questions.push({ r_ques_id, question, answer });
+          questions.push({ question, answer });
           i += 3;
         } else {
           return { valid: false };
@@ -76,29 +76,60 @@ export default function EditFlashcard({ flashcardData, onClose }) {
       return;
     }
 
-    const payload = {
-      reviewer_id: flashcardData.reviewer_id,
-      reviewer_title: title.trim(),
-      questions: parsed.questions,
-    };
-
     try {
-      const res = await fetch("/api/editflashcard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      // 1. Update Reviewer Title
+      const { error: reviewerError } = await supabase
+        .from("reviewers")
+        .update({ reviewer_title: title.trim() })
+        .eq("reviewer_id", flashcardData.reviewer_id);
 
-      const data = await res.json();
+      if (reviewerError) throw reviewerError;
 
-      if (res.ok) {
-        setMessage("Flashcard updated successfully.");
-      } else {
-        setMessage(data.message || "Failed to update flashcard.");
+      // 2. Delete old questions & answers associated with this reviewer
+      const { data: oldQuestions, error: fetchQError } = await supabase
+        .from("reviewer_questions")
+        .select("r_ques_id")
+        .eq("reviewer_id", flashcardData.reviewer_id);
+
+      if (fetchQError) throw fetchQError;
+
+      const qIds = oldQuestions.map((q) => q.r_ques_id);
+      if (qIds.length > 0) {
+        await supabase.from("reviewer_answers").delete().in("r_ques_id", qIds);
+        await supabase.from("reviewer_questions").delete().eq("reviewer_id", flashcardData.reviewer_id);
       }
+
+      // 3. Insert new questions and answers
+      for (let i = 0; i < parsed.questions.length; i++) {
+        const q = parsed.questions[i];
+        const r_ques_id = "RQ" + Math.floor(10000000 + Math.random() * 90000000);
+
+        const { error: qInsertError } = await supabase.from("reviewer_questions").insert([
+          {
+            r_ques_id,
+            reviewer_ques: q.question,
+            number_count: i + 1,
+            reviewer_id: flashcardData.reviewer_id,
+          },
+        ]);
+
+        if (qInsertError) throw qInsertError;
+
+        const { error: aInsertError } = await supabase.from("reviewer_answers").insert([
+          {
+            rev_ans_id: "QA" + Math.floor(10000000 + Math.random() * 90000000),
+            reviewer_answer: q.answer,
+            r_ques_id,
+          },
+        ]);
+
+        if (aInsertError) throw aInsertError;
+      }
+
+      setMessage("Flashcard updated successfully.");
     } catch (error) {
       console.error(error);
-      setMessage("Something went wrong.");
+      setMessage("Something went wrong during update.");
     }
   };
 
