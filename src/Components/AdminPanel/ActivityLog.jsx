@@ -1,20 +1,39 @@
 import { useState, useEffect } from "react";
+import { supabase } from "../../../api/supabaseServer";
 
 export default function ActivityLog() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("https://forreact.alwaysdata.net/getActivityLog.php")
-            .then((response) => response.json())
-            .then((data) => {
-                setLogs(data);
-                setLoading(false);
-            })
-            .catch((error) => {
+        const fetchLogs = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("activity_log")
+                    .select("*, user_tbl(username)")
+                    .order("date_time_log", { ascending: false });
+
+                if (error) throw error;
+
+                // Format data to match existing rendering
+                const formattedLogs = data.map((log) => ({
+                    log_id: log.log_id,
+                    user_id: log.user_id,
+                    username: log.user_tbl?.username || "N/A",
+                    account_type: log.account_type,
+                    activity: log.activity,
+                    date_time_log: log.date_time_log,
+                }));
+
+                setLogs(formattedLogs);
+            } catch (error) {
                 console.error("Error fetching activity logs:", error);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        fetchLogs();
     }, []);
 
     if (loading) {
@@ -40,7 +59,7 @@ export default function ActivityLog() {
                         <tr key={log.log_id} className="odd:bg-white even:bg-gray-50">
                             <td className="border border-gray-300 p-2">{log.log_id}</td>
                             <td className="border border-gray-300 p-2">{log.user_id}</td>
-                            <td className="border border-gray-300 p-2">{log.username || "N/A"}</td>
+                            <td className="border border-gray-300 p-2">{log.username}</td>
                             <td className="border border-gray-300 p-2">{log.account_type}</td>
                             <td className="border border-gray-300 p-2">{log.activity}</td>
                             <td className="border border-gray-300 p-2">{log.date_time_log}</td>
