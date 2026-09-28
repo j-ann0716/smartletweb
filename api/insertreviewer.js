@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import { supabase } from './supabaseServer.js';
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
@@ -6,19 +6,18 @@ export default async function handler(req, res) {
   const { reviewer_id, reviewer_title, creator_id, uploaded_date } = req.body;
 
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-    });
+    const { error } = await supabase
+      .from('reviewer_tbl')
+      .insert([
+        {
+          reviewer_id,
+          reviewer_title,
+          creator_id,
+          uploaded_date: uploaded_date || new Date().toISOString()
+        }
+      ]);
 
-    await connection.execute(
-      "INSERT INTO reviewer_tbl (reviewer_id, reviewer_title, creator_id, uploaded_date) VALUES (?, ?, ?, ?)",
-      [reviewer_id, reviewer_title, creator_id, uploaded_date]
-    );
-
-    await connection.end();
+    if (error) throw error;
 
     res.status(200).json({ success: true });
   } catch (err) {
