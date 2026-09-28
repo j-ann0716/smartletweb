@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../../../api/supabaseServer";
 
 export default function QuizFlashcardPanel() {
   const [quizData, setQuizData] = useState([]);
@@ -13,28 +14,34 @@ export default function QuizFlashcardPanel() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [quizRes, quesRes, choiceRes, ansRes, userRes, flashcardRes, fQuesRes, fAnsRes] = await Promise.all([
-          fetch("https://forreact.alwaysdata.net/getQuiz.php").then((res) => res.json()),
-          fetch("https://forreact.alwaysdata.net/getQuizQuestions.php").then((res) => res.json()),
-          fetch("https://forreact.alwaysdata.net/getQuizChoices.php").then((res) => res.json()),
-          fetch("https://forreact.alwaysdata.net/getQuizAnswers.php").then((res) => res.json()),
-
-          fetch("https://forreact.alwaysdata.net/getUsers.php").then((res) => res.json()),
-
-          fetch("https://forreact.alwaysdata.net/getFlashcardTitle.php").then((res) => res.json()),
-          fetch("https://forreact.alwaysdata.net/getFlashcardQuestions.php").then((res) => res.json()),
-          fetch("https://forreact.alwaysdata.net/getFlashcardAnswers.php").then((res) => res.json()),
-          
+        const [
+          { data: quizRes },
+          { data: quesRes },
+          { data: choiceRes },
+          { data: ansRes },
+          { data: userRes },
+          { data: flashcardRes },
+          { data: fQuesRes },
+          { data: fAnsRes }
+        ] = await Promise.all([
+          supabase.from("quiz_tbl").select("*"),
+          supabase.from("quiz_ques_tbl").select("*"),
+          supabase.from("quiz_choices_tbl").select("*"),
+          supabase.from("quiz_ans_tbl").select("*"),
+          supabase.from("user_tbl").select("*"),
+          supabase.from("reviewer_tbl").select("*"),
+          supabase.from("rev_ques_tbl").select("*"),
+          supabase.from("rev_ans_tbl").select("*")
         ]);
 
-        setQuizData(quizRes);
-        setQuestionData(quesRes);
-        setChoiceData(choiceRes);
-        setAnswerData(Array.isArray(ansRes) ? ansRes : [ansRes]);
-        setUsers(userRes);
-        setFlashcardData(flashcardRes);
-        setQuestionDataF(fQuesRes);
-        setAnswerDataF(fAnsRes);
+        setQuizData(quizRes || []);
+        setQuestionData(quesRes || []);
+        setChoiceData(choiceRes || []);
+        setAnswerData(ansRes || []);
+        setUsers(userRes || []);
+        setFlashcardData(flashcardRes || []);
+        setQuestionDataF(fQuesRes || []);
+        setAnswerDataF(fAnsRes || []);
       } catch (error) {
         console.error("Data fetch error:", error);
       }
@@ -54,9 +61,7 @@ export default function QuizFlashcardPanel() {
 
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left Column */}
       <div className="space-y-6">
-        {/* Quiz Table */}
         <div className="bg-white p-4 rounded shadow border-[#533d64]/80">
           <h2 className="text-lg font-bold mb-2 text-[#533d64]">Quiz Table</h2>
           <table className="w-full text-sm border border-gray-300">
@@ -83,7 +88,6 @@ export default function QuizFlashcardPanel() {
           </table>
         </div>
 
-        {/* Question Table */}
         <div className="bg-white p-4 rounded shadow border-[#533d64]/80">
           <h2 className="text-lg font-bold mb-2 text-[#533d64]">Questions Table</h2>
           <table className="w-full text-sm border border-gray-300">
@@ -142,7 +146,6 @@ export default function QuizFlashcardPanel() {
           </table>
         </div>
 
-        {/* Answer Table */}
         <div className="bg-white p-4 rounded shadow border-[#533d64]/80">
           <h2 className="text-lg font-bold mb-2 text-[#533d64]">Answer Table</h2>
           <table className="w-full text-sm border border-[#533d64]">
@@ -166,9 +169,7 @@ export default function QuizFlashcardPanel() {
         </div>
       </div>
 
-      {/* Right Column */}
       <div className="space-y-6">
-        {/* Flashcard Table */}
         <div className="bg-white p-4 rounded shadow border-[#533d64]/80">
           <h2 className="text-lg font-bold mb-2 text-[#533d64]">Flashcard Table</h2>
           <table className="w-full text-sm border border-gray-300">
@@ -182,10 +183,10 @@ export default function QuizFlashcardPanel() {
             </thead>
             <tbody>
               {flashcardData.map((fc) => (
-                <tr key={fc.r_ques_id} className="odd:bg-white even:bg-gray-50 text-center">
+                <tr key={fc.reviewer_id} className="odd:bg-white even:bg-gray-50 text-center">
                   <td className="p-2 border">{fc.reviewer_id}</td>
                   <td className="p-2 border">{fc.reviewer_title}</td>
-                  <td className="p-2 border">{getUsername(fc.username)}</td>
+                  <td className="p-2 border">{getUsername(fc.creator_id)}</td>
                   <td className="p-2 border">{fc.uploaded_date}</td>
                 </tr>
               ))}
@@ -193,7 +194,6 @@ export default function QuizFlashcardPanel() {
           </table>
         </div>
 
-        {/* Flashcard Questions Table */}
         <div className="bg-white p-4 rounded shadow border-[#533d64]/80">
           <h2 className="text-lg font-bold mb-2 text-[#533d64]">Flashcard Questions Table</h2>
           <table className="w-full text-sm border border-gray-300">
@@ -208,7 +208,7 @@ export default function QuizFlashcardPanel() {
               {[...questionDataF]
                 .sort((a, b) => a.r_ques_id.localeCompare(b.r_ques_id))
                 .map((q) => (
-                  <tr key={q.flashcard_ques_id} className="odd:bg-white even:bg-gray-50">
+                  <tr key={q.r_ques_id} className="odd:bg-white even:bg-gray-50">
                     <td className="p-2 border">{q.r_ques_id}</td>
                     <td className="p-2 border">{q.reviewer_ques}</td>
                     <td className="p-2 border text-center">{q.number_count}</td>
@@ -218,7 +218,6 @@ export default function QuizFlashcardPanel() {
           </table>
         </div>
 
-        {/* Flashcard Answers Table */}
         <div className="bg-white p-4 rounded shadow border-[#533d64]/80">
           <h2 className="text-lg font-bold mb-2 text-[#533d64]">Flashcard Answers Table</h2>
           <table className="w-full text-sm border border-[#533d64]">
@@ -232,7 +231,7 @@ export default function QuizFlashcardPanel() {
               {[...answerDataF]
                 .sort((a, b) => a.r_ques_id.localeCompare(b.r_ques_id))
                 .map((ans) => (
-                  <tr key={ans.flashcard_ans_id} className="odd:bg-white even:bg-gray-50 text-center">
+                  <tr key={ans.rev_ans_id} className="odd:bg-white even:bg-gray-50 text-center">
                     <td className="p-2 border">{ans.r_ques_id}</td>
                     <td className="p-2 border">{ans.reviewer_answer}</td>
                   </tr>
@@ -241,7 +240,6 @@ export default function QuizFlashcardPanel() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }
