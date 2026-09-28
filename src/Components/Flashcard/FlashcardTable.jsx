@@ -6,11 +6,10 @@ export default function FlashcardTable({ flashcards, loggedInUser, onEdit, onDel
   const [editingFlashcard, setEditingFlashcard] = useState(null);
   const [message, setMessage] = useState("");
 
-  // Log activity helper
   const logActivity = async (activity) => {
     if (!loggedInUser) return;
     try {
-      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+      await fetch("/api/logActivity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
