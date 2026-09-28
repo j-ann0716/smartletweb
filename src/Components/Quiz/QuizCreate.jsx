@@ -26,25 +26,6 @@ export default function QuizCreate({ onClose }) {
     setShowFormatError(false);
   };
 
-  // Log activity helper
-  const logActivity = async (activity) => {
-    if (!loggedInUser) return;
-
-    try {
-      await fetch("https://forreact.alwaysdata.net/logActivity.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: loggedInUser.user_id,
-          account_type: loggedInUser.account_type || "User",
-          activity,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to log activity:", err);
-    }
-  };
-
   const handleUpload = async () => {
     setMessage("");
     setShowFormatError(false);
@@ -93,10 +74,11 @@ export default function QuizCreate({ onClose }) {
     const uploaded_date = new Date().toISOString();
 
     try {
-      const res = await fetch("https://forreact.alwaysdata.net/createQuiz.php", {
+      const res = await fetch("/api/getUserData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "createQuiz",
           quiz_id,
           quiz_title,
           number_of_items: parsed.questions.length,
@@ -108,21 +90,14 @@ export default function QuizCreate({ onClose }) {
 
       const result = await res.json();
 
-      if (result.success) {
+      if (res.ok) {
         setMessage("Quiz uploaded successfully.");
         setFile(null);
         setManualText("");
         setTitle("");
         if (fileInputRef.current) fileInputRef.current.value = "";
-
-        // Log activity based on mode
-        if (mode === "upload") {
-          await logActivity("User uploaded a quiz file");
-        } else {
-          await logActivity("User created a quiz manually");
-        }
       } else {
-        setMessage("Error: " + result.message);
+        setMessage("Error: " + (result.message || "Failed to create quiz"));
       }
     } catch {
       setMessage("Network or server error.");
