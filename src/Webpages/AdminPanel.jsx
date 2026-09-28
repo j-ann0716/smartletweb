@@ -14,13 +14,13 @@ export default function AdminPanel() {
   useEffect(() => {
     if (activeTab === "User Data") {
       setLoading(true);
-      fetch("https://forreact.alwaysdata.net/getUsers.php")
+      fetch("/api/getUserData?type=users")
         .then((res) => {
           if (!res.ok) throw new Error("Failed to fetch users");
           return res.json();
         })
         .then((data) => {
-          setUsers(data);
+          setUsers(Array.isArray(data) ? data : []);
           setLoading(false);
         })
         .catch((err) => {
@@ -62,26 +62,17 @@ export default function AdminPanel() {
                         }) => (
                             <tr key={user_id} className="odd:bg-white even:bg-gray-100">
                             <td className="border border-gray-300 px-3 py-2">{user_id}</td>
-                            <td className="border border-gray-300 px-3 py-2">
-                                {first_name ?? "-"}
-                            </td>
-                            <td className="border border-gray-300 px-3 py-2">
-                                {last_name ?? "-"}
-                            </td>
+                            <td className="border border-gray-300 px-3 py-2">{first_name ?? "-"}</td>
+                            <td className="border border-gray-300 px-3 py-2">{last_name ?? "-"}</td>
                             <td className="border border-gray-300 px-3 py-2">{username}</td>
-                            <td className="border border-gray-300 px-3 py-2">
-                                {email ?? "-"}
-                            </td>
-                            <td className="border border-gray-300 px-3 py-2">
-                                {account_type}
-                            </td>
+                            <td className="border border-gray-300 px-3 py-2">{email ?? "-"}</td>
+                            <td className="border border-gray-300 px-3 py-2">{account_type}</td>
                             </tr>
                         )
                         )}
                     </tbody>
                 </table>
             </div>
-            
         </div>
     );
   };
@@ -101,19 +92,14 @@ export default function AdminPanel() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F8F4F9] text-[#533d64]">
-      {/* Sidebar */}
       <div className="w-full md:w-64 p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
-        <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8">
-          Admin Panel
-        </h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8">Admin Panel</h2>
         <ul className="space-y-2 md:space-y-4">
           {["User Data", "Quizzes & Flashcards", "Activity Log"].map((tab) => (
             <li key={tab}>
               <button
                 className={`w-full text-left px-4 py-2 shadow border-[#533d64]/20 rounded-lg transition-all ${
-                  activeTab === tab
-                    ? "bg-[#BC80BA] text-white"
-                    : "hover:bg-gray-100"
+                  activeTab === tab ? "bg-[#BC80BA] text-white" : "hover:bg-gray-100"
                 }`}
                 onClick={() => setActiveTab(tab)}
               >
@@ -124,7 +110,6 @@ export default function AdminPanel() {
         </ul>
       </div>
 
-      {/* Content */}
       <div className="flex-1 p-4 md:p-6">
         <div className="bg-white p-4 md:p-8 rounded-lg shadow">
             <h2 className="text-[#533d64] md:text-[22px] mb-3 font-semibold font-nunito">{activeTab}</h2>
