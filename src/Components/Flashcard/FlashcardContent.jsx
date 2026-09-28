@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import backArrow from "../../Webpages/img/icons8-back-96.png";
 import BackBtn from "../BackBtn";
-import { supabase } from "../../supabaseClient";
 
 export default function FlashcardContent() {
     const navigate = useNavigate();
@@ -20,14 +19,15 @@ export default function FlashcardContent() {
             const user = JSON.parse(localStorage.getItem("loggedInUser"));
             if (!user?.user_id || !reviewerId) return;
 
-            // Assuming you have a progress table in Supabase
-            await supabase
-                .from("user_progress")
-                .upsert({
+            await fetch("/api/saveprogress", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
                     user_id: user.user_id,
                     reviewer_id: reviewerId,
                     progress: Math.round(progressPercent),
-                }, { onConflict: ['user_id', 'reviewer_id'] });
+                }),
+            });
         } catch (error) {
             console.error("Failed to save progress:", error);
         }
@@ -50,39 +50,12 @@ export default function FlashcardContent() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch questions linked to this reviewer
-                const { data: questions, error: qError } = await supabase
-                    .from("reviewer_questions")
-                    .select("r_ques_id, reviewer_ques, number_count")
-                    .eq("reviewer_id", reviewerId)
-                    .order("number_count", { ascending: true });
-
-                if (qError) throw qError;
-
-                if (!questions || questions.length === 0) {
-                    setCards([]);
-                    return;
+                const res = await fetch(`/api/getFlashcardContent?rid=${reviewerId}`);
+                const data = await res.json();
+                
+                if (Array.isArray(data)) {
+                    setCards(data);
                 }
-
-                const qIds = questions.map((q) => q.r_ques_id);
-
-                // Fetch matching answers
-                const { data: answers, error: aError } = await supabase
-                    .from("reviewer_answers")
-                    .select("r_ques_id, reviewer_answer")
-                    .in("r_ques_id", qIds);
-
-                if (aError) throw aError;
-
-                const joined = questions.map((q) => {
-                    const match = answers?.find((a) => a.r_ques_id === q.r_ques_id);
-                    return {
-                        question: q.reviewer_ques,
-                        answer: match?.reviewer_answer || "No answer available",
-                    };
-                });
-
-                setCards(joined);
                 setCurrentIndex(0);
                 setFlip(false);
             } catch (error) {
@@ -95,19 +68,40 @@ export default function FlashcardContent() {
 
             const user = JSON.parse(localStorage.getItem("loggedInUser"));
             if (user?.user_id) {
-                supabase
-                    .from("user_progress")
-                    .upsert({
+                fetch("/api/saveprogress", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
                         user_id: user.user_id,
                         reviewer_id: reviewerId,
                         progress: 0,
-                    }, { onConflict: ['user_id', 'reviewer_id'] })
-                    .then(({ error }) => {
-                        if (error) console.error("Failed to save initial progress:", error);
-                    });
+                    }),
+                }).catch((err) => console.error("Failed to save initial progress:", err));
             }
         }
     }, [reviewerId]);
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            const progress = ((currentIndex + 1) / cards.length) * 100;
+            const user = JSON.parse(localStorage.getItem("loggedInUser"));
+            if (user?.user_id && reviewerId) {
+                const data = JSON.stringify({
+                    user_id: user.user_id,
+                    reviewer_id: reviewerId,
+                    progress: Math.round(progress),
+                });
+
+                if (navigator.sendBeacon) {
+                    const blob = new Blob([data], { type: "application/json" });
+                    navigator.sendBeacon("/api/saveprogress", blob);
+                }
+            }
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [currentIndex, cards.length, reviewerId]);
 
     const handleNext = () => {
         setFlip(false);
