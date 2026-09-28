@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import { supabase } from './supabaseServer.js';
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -12,23 +12,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-    });
+    const { error } = await supabase
+      .from('user_progress')
+      .upsert(
+        {
+          user_id,
+          reviewer_id,
+          progress,
+          last_updated: new Date().toISOString()
+        },
+        { onConflict: 'user_id,reviewer_id' }
+      );
 
-    const query = `
-      INSERT INTO user_progress (user_id, reviewer_id, progress, last_updated)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-      ON DUPLICATE KEY UPDATE
-        progress = VALUES(progress),
-        last_updated = CURRENT_TIMESTAMP
-    `;
-
-    await connection.execute(query, [user_id, reviewer_id, progress]);
-    await connection.end();
+    if (error) throw error;
 
     res.status(200).json({ success: true });
   } catch (err) {
