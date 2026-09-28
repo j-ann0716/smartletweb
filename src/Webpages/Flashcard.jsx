@@ -8,10 +8,11 @@ export default function Flashcard() {
 
     useEffect(() => {
         document.title = "Smartlet - Flashcard";
-        fetch("https://forreact.alwaysdata.net/getFlashcardTitle.php")
+        fetch("/api/getUserData?type=flashcardTitles")
             .then((res) => res.json())
             .then((data) => {
-                const shuffled = data.sort(() => 0.5 - Math.random());
+                const list = Array.isArray(data) ? data : [];
+                const shuffled = list.sort(() => 0.5 - Math.random());
                 const selected = shuffled.slice(0, 12);
                 setReviewers(selected);
             })
