@@ -33,7 +33,7 @@ export default function QuizContent() {
       }
 
       try {
-        const res = await fetch(`https://forreact.alwaysdata.net/getFullQuizById.php?quiz_id=${quizId}`);
+        const res = await fetch(`/api/getUserData?type=fullQuiz&quiz_id=${quizId}`);
         const data = await res.json();
 
         if (!isMounted) return;
@@ -125,34 +125,17 @@ export default function QuizContent() {
     };
 
     try {
-      const res = await fetch('https://forreact.alwaysdata.net/submitQuizScore.php', {
+      const res = await fetch('/api/savequizscore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
       alert(`Quiz completed! You scored ${correctCount} out of ${questions.length}.`);
       if (res.ok) {
-        try {
-          // Log the activity
-          await fetch('https://forreact.alwaysdata.net/logActivity.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: user.user_id,
-              account_type: user.account_type || 'User',
-              activity: `User answered quiz (${quizTitle})`,
-            }),
-          });
-          
-        } catch (logErr) {
-          console.warn('Activity logging failed:', logErr);
-        }
-
-        
         navigate('/quiz');
       } else {
+        const data = await res.json();
         setMessage(data.message || 'Failed to submit score.');
       }
     } catch (err) {
@@ -160,7 +143,6 @@ export default function QuizContent() {
       setMessage('An error occurred while submitting your score.');
     }
   };
-
 
   if (loading) {
     return (
