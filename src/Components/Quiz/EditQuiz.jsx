@@ -21,14 +21,12 @@ export default function EditQuiz({ quizData, onClose }) {
     setShowFormatError(false);
   };
 
-  // Parses quiz text input into questions array, detecting correct answers with "-" prefix on choices
   const parseQuiz = (text) => {
     const lines = text.split(/\r?\n/);
     const questions = [];
     let i = 0;
 
     while (i < lines.length) {
-      // Match question either "1. Question text" or "1) Question text"
       const questionMatch = lines[i].match(/^\d+[\.\)]\s*(.+)$/);
       if (questionMatch) {
         const question = questionMatch[1].trim();
@@ -37,15 +35,9 @@ export default function EditQuiz({ quizData, onClose }) {
 
         for (let j = 1; j <= 4; j++) {
           const choiceLine = lines[i + j]?.trim();
-          // Choice lines must exist and match a letter + ")" or "." after optional "-"
-          if (
-            !choiceLine ||
-            !/^(-)?[a-dA-D][\.\)]\s+/.test(choiceLine)
-          ) return { valid: false };
+          if (!choiceLine || !/^(-)?[a-dA-D][\.\)]\s+/.test(choiceLine)) return { valid: false };
 
-          // Check if line starts with "-" (means correct answer)
           const isCorrect = choiceLine.startsWith("-");
-          // Extract letter (a-d)
           const letterMatch = choiceLine.match(/^(-)?([a-dA-D])[\.\)]\s+(.*)$/);
           if (!letterMatch) return { valid: false };
 
@@ -54,18 +46,12 @@ export default function EditQuiz({ quizData, onClose }) {
 
           choices[letter] = textChoice;
           if (isCorrect) {
-            if (correctAnswer !== null) {
-              // More than one correct answer invalid format
-              return { valid: false };
-            }
+            if (correctAnswer !== null) return { valid: false };
             correctAnswer = letter;
           }
         }
 
-        if (!correctAnswer) {
-          // No correct answer invalid format
-          return { valid: false };
-        }
+        if (!correctAnswer) return { valid: false };
 
         const questionObj = {
           q_ques_id: "QQ" + Math.floor(10000000 + Math.random() * 90000000),
@@ -75,7 +61,7 @@ export default function EditQuiz({ quizData, onClose }) {
         };
 
         questions.push(questionObj);
-        i += 5; // Skip to next question
+        i += 5;
       } else {
         i++;
       }
@@ -118,10 +104,10 @@ export default function EditQuiz({ quizData, onClose }) {
     };
 
     try {
-      const res = await fetch("https://forreact.alwaysdata.net/editQuiz.php", {
+      const res = await fetch("/api/getUserData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ action: "updateQuiz", ...payload }),
       });
 
       const data = await res.json();
