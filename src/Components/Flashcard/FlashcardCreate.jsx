@@ -27,27 +27,17 @@ export default function FlashcardCreate({ onClose }) {
   };
 
   const logActivity = async (activity) => {
-    if (!loggedInUser) {
-      console.error("User not logged in.");
-      return;
-    }
-
-    const logData = {
-      user_id: loggedInUser.user_id,
-      account_type: loggedInUser.account_type || "User",
-      activity,
-    };
-
+    if (!loggedInUser) return;
     try {
-      const res = await fetch("https://forreact.alwaysdata.net/logActivity.php", {
+      await fetch("/api/logActivity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(logData),
+        body: JSON.stringify({
+          user_id: loggedInUser.user_id,
+          account_type: loggedInUser.account_type || "User",
+          activity,
+        }),
       });
-
-      if (!res.ok) {
-        console.error("Failed to log activity:", activity);
-      }
     } catch (err) {
       console.error("Error logging activity:", err);
     }
@@ -153,7 +143,6 @@ export default function FlashcardCreate({ onClose }) {
       setTitle("");
       if (fileInputRef.current) fileInputRef.current.value = "";
 
-      // Log successful flashcard creation
       await logActivity("User created a flashcard set");
     } catch (err) {
       console.error(err);
@@ -167,7 +156,7 @@ export default function FlashcardCreate({ onClose }) {
     let i = 0;
 
     while (i < lines.length) {
-      const questionMatch = lines[i].match(/^\d+[\.\)]\s*(.+)$/); // 1. or 1)
+      const questionMatch = lines[i].match(/^\d+[\.\)]\s*(.+)$/);
       if (questionMatch) {
         const question = questionMatch[1].trim();
         const answerLine = lines[i + 1]?.trim();
@@ -286,7 +275,6 @@ export default function FlashcardCreate({ onClose }) {
           </div>
         </div>
       )}
-
 
       {message && (
         <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
