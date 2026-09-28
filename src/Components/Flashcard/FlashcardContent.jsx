@@ -19,6 +19,7 @@ export default function FlashcardContent() {
             const user = JSON.parse(localStorage.getItem("loggedInUser"));
             if (!user?.user_id || !reviewerId) return;
 
+            
             await fetch("/api/saveprogress", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
