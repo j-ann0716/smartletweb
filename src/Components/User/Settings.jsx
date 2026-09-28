@@ -23,13 +23,6 @@ export default function Settings() {
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    document.documentElement.classList.toggle("dark", newDarkMode);
-    localStorage.setItem("theme", newDarkMode ? "dark" : "light");
-  };
-
   const handleDeleteAccount = async () => {
     if (!userId && !username) {
       setMessage("User ID or Username not found.");
@@ -42,31 +35,17 @@ export default function Settings() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(
-        "https://forreact.alwaysdata.net/deleteUserProfile.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: userId, username }),
-        }
-      );
+      const res = await fetch("/api/getUserData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteProfile", user_id: userId, username }),
+      });
 
-      const text = await res.text(); // Get raw text
-      // console.log("Raw response:", text);
+      const data = await res.json();
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (jsonErr) {
-        setMessage("Server returned invalid JSON: " + text);
-        setShowMessage(true);
-        return;
-      }
-
-      if (data.success) {
+      if (res.ok) {
         setMessage("Account deleted successfully.");
         setShowMessage(true);
-        // Clear storage and redirect after a short delay so user can read message
         setTimeout(() => {
           localStorage.clear();
           sessionStorage.clear();
@@ -95,13 +74,6 @@ export default function Settings() {
 
   return (
     <div className="space-y-4">
-      {/* <button
-        onClick={toggleDarkMode}
-        className="w-full bg-[#ffffff] text-[#533d64] py-3 px-6 rounded-lg shadow hover:bg-[#ebebeb] transition-all"
-      >
-        {darkMode ? "Disable Dark Mode" : "Enable Dark Mode"}
-      </button> */}
-
       <button
         onClick={handleDeleteAccount}
         className="w-full bg-[#ffffff] text-[#533d64] py-3 px-6 rounded-lg shadow hover:bg-[#ebebeb] transition-all"
