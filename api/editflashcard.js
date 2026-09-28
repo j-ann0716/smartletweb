@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise";
+import { supabase } from './supabaseServer.js';
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -11,86 +11,77 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing reviewer_id, title or questions." });
   }
 
-  const conn = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-  });
-
   try {
-    await conn.beginTransaction();
+    const { error: revError } = await supabase
+      .from('reviewer_tbl')
+      .update({ reviewer_title })
+      .eq('reviewer_id', reviewer_id);
 
-    await conn.query(
-      "UPDATE reviewer_tbl SET reviewer_title = ? WHERE reviewer_id = ?",
-      [reviewer_title, reviewer_id]
-    );
+    if (revError) throw revError;
 
     const currentIDs = [];
 
     for (const q of questions) {
       const { r_ques_id, question, answer } = q;
-
       if (!r_ques_id || !question || !answer) continue;
+
       currentIDs.push(r_ques_id);
 
-      const [qRes] = await conn.query(
-        "UPDATE rev_ques_tbl SET reviewer_ques = ? WHERE r_ques_id = ? AND reviewer_id = ?",
-        [question, r_ques_id, reviewer_id]
-      );
+      const { data: existingQ } = await supabase
+        .from('rev_ques_tbl')
+        .select('r_ques_id')
+        .eq('r_ques_id', r_ques_id)
+        .eq('reviewer_id', reviewer_id)
+        .single();
 
-      if (qRes.affectedRows === 0) {
-        await conn.query(
-          "INSERT INTO rev_ques_tbl (r_ques_id, reviewer_id, reviewer_ques) VALUES (?, ?, ?)",
-          [r_ques_id, reviewer_id, question]
-        );
+      if (existingQ) {
+        await supabase
+          .from('rev_ques_tbl')
+          .update({ reviewer_ques: question })
+          .eq('r_ques_id', r_ques_id);
+      } else {
+        await supabase
+          .from('rev_ques_tbl')
+          .insert([{ r_ques_id, reviewer_id, reviewer_ques: question, number_count: currentIDs.length }]);
       }
 
-      const [aRes] = await conn.query(
-        "SELECT * FROM rev_ans_tbl WHERE r_ques_id = ?",
-        [r_ques_id]
-      );
+      const { data: existingAns } = await supabase
+        .from('rev_ans_tbl')
+        .select('rev_ans_id')
+        .eq('r_ques_id', r_ques_id);
 
-      if (aRes.length > 0) {
-        await conn.query(
-          "UPDATE rev_ans_tbl SET reviewer_answer = ? WHERE r_ques_id = ?",
-          [answer, r_ques_id]
-        );
+      if (existingAns && existingAns.length > 0) {
+        await supabase
+          .from('rev_ans_tbl')
+          .update({ reviewer_answer: answer })
+          .eq('r_ques_id', r_ques_id);
       } else {
         const answer_id = `QA${Math.floor(Math.random() * 1e8).toString().padStart(8, "0")}`;
-        await conn.query(
-          "INSERT INTO rev_ans_tbl (rev_ans_id, r_ques_id, reviewer_answer) VALUES (?, ?, ?)",
-          [answer_id, r_ques_id, answer]
-        );
+        await supabase
+          .from('rev_ans_tbl')
+          .insert([{ rev_ans_id: answer_id, r_ques_id, reviewer_answer: answer }]);
       }
     }
 
-    // DELETE if any questions removed
     if (currentIDs.length > 0) {
-      const placeholders = currentIDs.map(() => "?").join(",");
-      await conn.query(
-        `DELETE FROM rev_ans_tbl 
-         WHERE r_ques_id IN (
-           SELECT r_ques_id FROM rev_ques_tbl 
-           WHERE reviewer_id = ? AND r_ques_id NOT IN (${placeholders})
-         )`,
-        [reviewer_id, ...currentIDs]
-      );
+      const { data: allQuestions } = await supabase
+        .from('rev_ques_tbl')
+        .select('r_ques_id')
+        .eq('reviewer_id', reviewer_id);
 
-      await conn.query(
-        `DELETE FROM rev_ques_tbl 
-         WHERE reviewer_id = ? AND r_ques_id NOT IN (${placeholders})`,
-        [reviewer_id, ...currentIDs]
-      );
+      const idsToDelete = allQuestions
+        ?.map(q => q.r_ques_id)
+        .filter(id => !currentIDs.includes(id)) || [];
+
+      if (idsToDelete.length > 0) {
+        await supabase.from('rev_ans_tbl').delete().in('r_ques_id', idsToDelete);
+        await supabase.from('rev_ques_tbl').delete().in('r_ques_id', idsToDelete);
+      }
     }
 
-    await conn.commit();
     res.status(200).json({ message: "Flashcard updated successfully" });
   } catch (err) {
-    await conn.rollback();
     console.error("Update failed:", err);
-    res.status(500).json({ error: "Failed to update flashcard" });
-  } finally {
-    await conn.end();
+    res.status(500).json({ error: "Failed to update flashcard: " + err.message });
   }
 }
