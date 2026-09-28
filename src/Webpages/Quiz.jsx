@@ -8,10 +8,11 @@ export default function Quiz() {
 
   useEffect(() => {
     document.title = "Smartlet - Quiz";
-    fetch("https://forreact.alwaysdata.net/getQuizList.php")
+    fetch("/api/getUserData?type=quizzes")
       .then((res) => res.json())
       .then((data) => {
-        const shuffled = data.sort(() => 0.5 - Math.random());
+        const list = Array.isArray(data) ? data : [];
+        const shuffled = list.sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, 12);
         setQuizzes(selected);
       })
